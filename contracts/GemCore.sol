@@ -396,12 +396,14 @@ contract GemCore is GemMining {
         uint256 morphTime,
         uint256 price,
         uint256 rarity,
+        uint256 id,
         address owner
     ) {
         Gem storage myGem = gems[_id];
         morphTime = uint256(myGem.morphTime);
         rarity = myGem.rarity;
         price = myGem.price;
+        id = _id;
         owner = gemIndexToOwner[_id];
     }
 }
