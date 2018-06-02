@@ -131,6 +131,9 @@ contract GemOwnership is GemBase, ERC721 {
 
       // Transfer ether to the previous owner
       gemIndexToOwner[_gemId].transfer(msg.value);
+      
+      // Set price to zero
+      gems[_gemId].price = 0;
     } 
 
     // Internal utility functions: These functions all assume that their input arguments
