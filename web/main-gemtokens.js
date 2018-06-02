@@ -397,6 +397,14 @@ function setup() {
 			{
 				"name": "rarity",
 				"type": "uint256"
+			},
+			{
+				"name": "id",
+				"type": "uint256"
+			},
+			{
+				"name": "owner",
+				"type": "address"
 			}
 		],
 		"payable": false,
@@ -574,7 +582,7 @@ function setup() {
 	}
 ];
 
-    var contract = web3.eth.contract(abiArray).at("0x88121a6825b7da9a85e14a7015df626f3ae69ee6");
+		var contract = web3.eth.contract(abiArray).at("0xc7a39fea0c4385547c9bab22b7afa30d926e0101");
 
     var myNumGems;
 		var myGems;
@@ -616,19 +624,22 @@ function setup() {
 							// Grab the gem info and put it on the page
 							contract.getGem(j, function(error, result) {
 								if(!error) {
-									console.log("Gem ID: X");
-									console.log("Creation Date: " + result[0].c[0]);
-									console.log("Price: " + result[1].c[0]);
-									console.log("Rarity: " + result[2].c[0]);
-								
-									gemString = "<div class='gem col-sm'>" + 
-															"GEM ID: X" +
-															"<br/>Creation Date: " + result[0].c[0] +
+									console.log(result);
+									
+									var creationDate = new Date(result[0].c[0]*1000);
+									var rarity = (Math.log10(result[2].c[0]).toFixed(2) - 4) * 7;
+
+									gemString = "<div " +
+															"style='background: rgba(0,"+parseInt(100-rarity)+","+parseInt(rarity*2)+",0.8)'" +
+															"class='gem col-sm' data-rarity='"+rarity+"'>" + 
+															"GEM ID: " + result[3].c[0] +
+															"<br/>Creation Date: " + creationDate.toLocaleString() +
 															"<br/>Price: " + result[1].c[0] +
-															"<br/>Rarity: " + result[2].c[0] +
+															"<br/>Rarity: " + rarity +
+															"<br/><br/><button type='button' class='btn-md btn-info' value='Place for Sale'>Place for Sale</button>" + 
 															"</div>"
 
-									$("#gem-display").append(gemString);
+									$("#gem-display").prepend(gemString);
 											
 	
 								} else {
@@ -645,7 +656,7 @@ function setup() {
 		}
 
     refresh();
-    setInterval(refresh, 5000);
+    setInterval(refresh, 15000);
 }
 
 window.addEventListener("load", function() {
