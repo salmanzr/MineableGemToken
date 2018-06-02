@@ -335,7 +335,7 @@ contract GemMining is GemOwnership {
     if (uint(digest) > miningTarget[msg.sender]) revert();
 
     // Success! Call the internal minting function.
-    _createGem(_MAXIMUM_TARGET.div(miningTarget[msg.sender]), msg.sender);
+    _createGem(miningTarget[msg.sender], msg.sender);
 
     // Set new challenge number for the user
     challengeNumber[msg.sender] = keccak256(abi.encodePacked(nonce));
@@ -354,7 +354,7 @@ contract GemMining is GemOwnership {
     return challengeNumber[msg.sender];
   }
 
-  // Gets the number of zeroers the digest of the PoW solution requires for the user
+  // Gets the number of zeroes the digest of the PoW solution requires for the user
   function getMiningDifficulty() public constant returns (uint) {
     return _MAXIMUM_TARGET.div(miningTarget[msg.sender]);
   }
