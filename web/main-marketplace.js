@@ -584,12 +584,11 @@ function setup() {
 
 		var contract = web3.eth.contract(abiArray).at("0x6478f69cc8da40031d7aaee77bdfd50015e75237");
 
-    var myNumGems;
-		var myGems;
+    var totalGems;
 
-    contract.balanceOf(web3.eth.accounts[0], function(error, result) {
+    contract.totalSupply(function(error, result) {
 			if (!error) {
-				myNumGems = result;
+				totalGems = result;
 			} else {
 				console.error(error)
 			}
@@ -600,98 +599,58 @@ function setup() {
 			// First, delete all of the displayed gems
 			$("#gem-display").empty()
 
-			// Grab the number of gems we have
-			contract.balanceOf(web3.eth.accounts[0], function(error, result) {
+			// Grab the number of gems total
+			contract.totalSupply(function(error, result) {
 				if (!error) {
-				  myNumGems = result;
-			
-					contract.getMiningTarget(function(error, result) {
-						if (!error) {
-							rarity = result.toNumber() / (1E61);
-							var htmlString = "<p>You own "+myNumGems+" gems!</p><p>Your Rarity Target: "+rarity+
-															 " (high number = less rare)</p><div class='row'><div class='col-sm-10 mr-0 pr-0'><input type='button' id='setdifficultybutton' class='btn btn-md rounded-0 border-right-0' value='Set Target Rarity'></input></div>" +
-															 "<div class='col-sm-2 pl-0 ml-0'><input type='text' id='setdifficultyvalue' class='input-sm rounded-0 border-left-0 form-control'></input></div></div>"
-							$("#numtokensdiv").html(htmlString);
-							$("#setdifficultybutton").click(function(){
-								var temp = $("#setdifficultyvalue").val();
-								diff = new web3.BigNumber(10).pow(61) * temp;
-								console.log(diff.toString());
-								contract.setMyDifficulty(diff.toString(), function(error, result){
-									if(!error) {
-										console.log("Set difficulty sucessful!");
-									} else {
-										console.error(error);	
-									}
-								});
-							});
-						} else {
-							console.error(error);
-						}
-					});
+				  totalGems = result;
 				} else {
-					console.error(error);
+				  console.error(error);
 				}
 			});
 
-			if (myGems != 0) {
-				// Get the Gem ids
-        contract.tokensOfOwner(web3.eth.accounts[0], function(error, result) {
-					if (!error) {
-						// Resould should be a list of ids
-						var j;
-						console.log("Owned Gems (IDs):");
-						$("#gem-display").empty();
-						for(let j of result){
-							//console.log(result[j].c[0]);
-							// Grab the gem info and put it on the page
-							contract.getGem(j, function(error, result) {
+			if (totalGems != 0) {
+				// Iterate though every gem
+				// If price isn't zero, show it on the marketplace
+				var k;
+				for (k=0; k<totalGems+1; k++) {
+							contract.getGem(k, function(error, result) {
 								if(!error) {
 									console.log(result);
 									
 									var creationDate = new Date(result[0].c[0]*1000);
-									var rarity = result[2].toNumber() / 1E61;
+									var rarity = result[2].toNumber() / 1E61
 									var price = result[1].c[0] == 0 ? "Not for sale" : result[1].c[0] / 10000;
-									var priceString = price == "Not for sale" ? "Not for sale" : price + " ETH";
-									var buttonText = price == "Not for sale" ? "Sell" : "Delist";
 									var gemID = result[3].c[0];
 									var onClickScript = "";
+									var owner = result[4];
 
 									gemString = "<div " +
-															" style='background: rgba(0,"+parseInt((1E6-rarity)/4000)+",25,0.5)'" +
+														  " style='background: rgba(0,"+parseInt((1E6-rarity)/4000)+",25,0.5)'" +
 															" id='gem"+gemID+"'" +
-															" class='gem col-sm-6 col-mg-5 col-lg-5' data-price='"+price+"' data-rarity='"+rarity+"'>" + 
+															" class='gem col-sm' data-price='"+price+"' data-rarity='"+rarity+"'>" + 
 															"GEM ID: " + result[3].c[0] +
+															"<br/>Ownmer: " + owner +
 															"<br/>Creation Date: " + creationDate.toLocaleString() +
-															"<br/>Price: " + priceString +
+															"<br/>Price: " + price + " ETH" + 
 															"<br/>Rarity: " + rarity +
-															"<br/><br/><div class='row'><div class='col-sm-9 mr-0 pr-0 text-left'><button type='button' class='btn btn-info rounded-0 border-right-0' onClick='"+onClickScript+"' value='Sell'>" + buttonText + "</button></div>" + 
-															"<div class='col-sm-3 ml-0 pl-0 text-right'><input type='text' class='input-sm form-control rounded-0 border-left-0'></div></div>" +
+															"<br/><br/><div class='row'><div class='col-sm'><button type='button' class='btn btn-info rounded-0' onClick='"+onClickScript+"' value='Sell'>Buy Gem</button></div>" + 
+												
 															"</div>"
 
+									if (price != "Not for sale") {
 									$("#gem-display").prepend(gemString);
 									$("#gem" + gemID + " button").click(function() {
-										if ($("#gem" + gemID).data("price") == "Not for sale") {
-											var price = $("#gem" + gemID + " input").val() * 1e18;
-											console.log("Selected Price:" + price);
-											contract.putGemForSale(gemID, price, function(error, result){
+											var price = $("#gem" + gemID).data("price") * 1e18;
+											contract.buyGem(gemID, {from: web3.eth.accounts[0], value: price}, function(error, result){
 											});
-										} else {
-											contract.delistGem(gemID, function(error, result){
-											});
-										}
 									});
-											
+									}
 	
 								} else {
 									console.error(error);
 								}
 							});
-						}
-					} else {
-						console.error(error);
-					}
-				});
-
+				}
 			}
 		}
 

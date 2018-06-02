@@ -49,9 +49,7 @@
 			.gem {
 				text-align: center;
 				padding: 15px;
-				margin: auto;
-				margin-top: 10px;
-				margin-bottom: 10px;
+				margin: 10px;
 				border-color: white;
 				border-width: 1px;
 				border-style: solid;
@@ -75,26 +73,43 @@
         <div class="navbar-nav ml-auto">
 					<a class="nav-item nav-link" href="/index.html">My Gems</a>
 					<a class="nav-item nav-link" href="/marketplace.html">Marketplace</a>
-					<a class="nav-item nav-link" href="/get-started.html">Get Started</a>
+					<a class="nav=item nav-link" href="/get-started.html">Get Started</a>
           <a class="nav-item nav-link" href="https://ropsten.etherscan.io/address/0x6478f69cc8da40031d7aaee77bdfd50015e75237">Contract</a>
         </div>
       </div>
     </nav>
     <main class="container text-white">
       <div class="my-3 px-3 border rounded bg-dark-transparent">
-        <div class="headline text-center py-2">Your Gem Tokens</div>
-        <div id="numtokensdiv" class="text-center border-bottom py-2">
-				
-				</div>
+        <div class="headline text-center border-bottom py-2 pt-3"><h3>Mineable Gems on Ethereum</h3></div>
 	<div class="d-flex justify-content-center align-items-center my-2">
 	  <div class="d-flex flex-column small">
 	  </div>
 
-		<div class="container justify-content-center align-items-center">
-		<div id="gem-display" class="row">
-			<div class="col-sm">Gem1</div>
-			<div class="col-sm">Gem2</div>
-			<div class="col-sm">Gem3</div>
+		<div class="container">
+		<div class="row">
+			<div class="col-sm text-center"><h5>Mineable Gem Tokens: The First-Ever Mineable ERC-721 Collectible Token</h5></div>
+		</div>
+		<div class="row">
+			<div class="col-sm border-top">
+				<br/>
+				<h5>With mineable gem tokens, you can:</h5>
+				- Mine at whichever difficulty you like!<br/>
+				- Mine at an easier difficulty for more gems<br/> 
+				- Mine at a harder difficulty for more valuable gems<br/>
+				- Place your gems on the marketplace to sell them to others<br/>
+				- Buy gems you like on the marketplace<br/><br/>
+			</div>
+			<div class="col-sm border-top">
+				<br/>	
+				<h5>To get started with mining:</h5>
+				- Download any 0xBitcoin-compatible mining software (it must support *solo* mining)<br/>
+				- Follow instructions to set it up<br/>
+				- Contract Address: 0x6478f69cc8da40031d7aaee77bdfd50015e75237 (ropsten only!)<br/>
+				- With the same account, set your target rarity (on the my gems page)<br/>
+				- (Lower rarity = harder to mine)<br/>
+				- (A rarity of 50,000 takes about 2 GTX 1070's 10 minutes to mine)<br/>
+				- (Rarity is directly proportional to hashpower)<br/>
+			</div>
 		</div>
 		</div>
 	</div>
@@ -106,7 +121,6 @@
     <script src="vendor/popper.min.js"></script>
     <script src="vendor/bootstrap.min.js"></script>
     <script src="vendor/web3.min.js"></script>
-    <script src="main-gemtokens.js"></script>
   </body>
 </html>
 
