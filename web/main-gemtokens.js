@@ -596,28 +596,56 @@ function setup() {
 			contract.balanceOf(web3.eth.accounts[0], function(error, result) {
 				if (!error) {
 				  myNumGems = result;
+					$("#numtokensdiv").empty()
+					$("#numtokensdiv").append("<p>"+result+"</p>");
 				} else {
 				  console.error(error);
 				}
 			});
 
 			if (myGems != 0) {
-				// Then, if we have any, display them
-				var i;
-				for (i=0; i < myNumGems; i++){
-					contract.getGem(i, {from: web3.eth.accounts[0]}, function(error, result) {
-						if (!error) {
-						  $("#gem-display").append("<div class='col-sm'>Gem"+i+"</div>")
-						} else {
-						  console.error(error);
+				// Get the Gem ids
+        contract.tokensOfOwner(web3.eth.accounts[0], function(error, result) {
+					if (!error) {
+						// Resould should be a list of ids
+						var j;
+						console.log("Owned Gems (IDs):");
+						$("#gem-display").empty();
+						for(let j of result){
+							//console.log(result[j].c[0]);
+							// Grab the gem info and put it on the page
+							contract.getGem(j, function(error, result) {
+								if(!error) {
+									console.log("Gem ID: X");
+									console.log("Creation Date: " + result[0].c[0]);
+									console.log("Price: " + result[1].c[0]);
+									console.log("Rarity: " + result[2].c[0]);
+								
+									gemString = "<div class='gem col-sm'>" + 
+															"GEM ID: X" +
+															"<br/>Creation Date: " + result[0].c[0] +
+															"<br/>Price: " + result[1].c[0] +
+															"<br/>Rarity: " + result[2].c[0] +
+															"</div>"
+
+									$("#gem-display").append(gemString);
+											
+	
+								} else {
+									console.error(error);
+								}
+							});
 						}
-					});
-				}
+					} else {
+						console.error(error);
+					}
+				});
+
 			}
 		}
 
     refresh();
-    setInterval(refresh, 10000);
+    setInterval(refresh, 5000);
 }
 
 window.addEventListener("load", function() {
