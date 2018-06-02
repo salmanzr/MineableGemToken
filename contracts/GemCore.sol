@@ -13,9 +13,6 @@ contract ERC721 {
   // Events
   event Transfer(address from, address to, uint256 tokenId);
   event Approval(address owner, address approved, uint256 tokenId);
-
-  // ERC-165 Compatibility (https://github.com/ethereum/EIPs/issues/165)
-  function supportsInterface(bytes4 _interfaceID) external view returns (bool);
 }
 
 contract GemBase {
