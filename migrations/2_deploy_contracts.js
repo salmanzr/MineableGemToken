@@ -1,5 +1,5 @@
-var _0xBitcoinToken = artifacts.require("./_0xBitcoinToken.sol");
+var GemCore = artifacts.require("./GemCore.sol");
 
 module.exports = function(deployer) {
-  deployer.deploy(_0xBitcoinToken);
+  deployer.deploy(GemCore);
 };

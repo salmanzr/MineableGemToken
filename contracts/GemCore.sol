@@ -3,7 +3,7 @@ pragma solidity ^0.4.23;
 /// @title Interface for contracts conforming to ERC-721: Non-Fungible Tokens
 contract ERC721 {
   // Required methods
-	function totalSupply() public view returns (uint256 total);
+  function totalSupply() public view returns (uint256 total);
   function balanceOf(address _owner) public view returns (uint256 balance);
   function ownerOf(uint256 _tokenId) external view returns (address owner);
   function approve(address _to, uint256 _tokenId) external;
@@ -114,10 +114,15 @@ contract GemOwnership is GemBase, ERC721 {
   // Put a gem for sale only if the caller is the owner
   function putGemForSale (uint256 _gemId, uint256 _price) external {
       require(_price != 0);
-      if (_owns(msg.sender, _gemId)) {
-          gems[_gemId].price = _price;
-        }
+      require(_owns(msg.sender, _gemId));
+      gems[_gemId].price = _price;
     }
+
+  // Delist a gem that you don't want to sell anymore
+  function delistGem (uint256 _gemId) external {
+      require(_owns(msg.sender, _gemId));
+      gems[_gemId].price = 0;
+  }
 
   // Buy a gem that is for sale (i.e. the price is not 0)
   function buyGem (uint256 _gemId) external payable {
