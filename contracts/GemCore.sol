@@ -335,12 +335,12 @@ contract GemMining is GemOwnership {
     if (uint(digest) > miningTarget[msg.sender]) revert();
 
     // Success! Call the internal minting function.
-    _createGem(miningTarget[msg.sender], msg.sender);
+    _createGem(_MAXIMUM_TARGET.div(miningTarget[msg.sender]), msg.sender);
 
     // Set new challenge number for the user
     challengeNumber[msg.sender] = keccak256(abi.encodePacked(nonce));
 
-		return true;
+	return true;
   }
 
   // Sets the user's difficulty that they wish to mine at
