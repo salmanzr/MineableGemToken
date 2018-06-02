@@ -146,7 +146,7 @@ contract Owned {
     event OwnershipTransferred(address indexed _from, address indexed _to);
 
 
-    function Owned() public {
+    constructor() public {
 
         owner = msg.sender;
 
@@ -171,17 +171,11 @@ contract Owned {
     function acceptOwnership() public {
 
         require(msg.sender == newOwner);
-
-        OwnershipTransferred(owner, newOwner);
-
+        emit OwnershipTransferred(owner, newOwner);
         owner = newOwner;
-
         newOwner = address(0);
-
     }
-
 }
-
 
 
 // ----------------------------------------------------------------------------
@@ -192,7 +186,7 @@ contract Owned {
 
 // ----------------------------------------------------------------------------
 
-contract MineableGemToken is ERC721Interface, Owned {
+contract MineableGemToken is ERC20Interface, Owned {
 
     using SafeMath for uint;
     using ExtendedMath for uint;
@@ -205,33 +199,33 @@ contract MineableGemToken is ERC721Interface, Owned {
 
     uint public latestDifficultyPeriodStarted;
 
-		// Number of "blocks" (gems) mined
+	// Number of "blocks" (gems) mined
     uint public epochCount;
 
-		// @TODO remove this
+	// @TODO remove this
     uint public _BLOCKS_PER_READJUSTMENT = 1024;
 
     // Minimum difficulty that you can mine at.
     uint public  _MINIMUM_TARGET = 2**16;
 
-		// Maximum diffuculty that you can mine at.
+	// Maximum diffuculty that you can mine at.
     uint public  _MAXIMUM_TARGET = 2**234;
 
-		// The actual difficulty to mine at
-		// Different per user
+	// The actual difficulty to mine at
+	// Different per user
     mapping(address => uint) public miningTarget;
 
-		// Challenge number - means that no one can submit the same hash twice
-		// A new one is generated for a user when that user mints as new gem
+	// Challenge number - means that no one can submit the same hash twice
+	// A new one is generated for a user when that user mints as new gem
     mapping(address => bytes32) public challengeNumber;
 
-		// Just stores the last person that created a MGT
+	// Just stores the last person that created a MGT
     address public lastRewardTo;
 
-		// Just stores the last block number a token was created
+	// Just stores the last block number a token was created
     uint public lastRewardEthBlockNumber;
 
-		// Stores the solutions for each challenge so that people can't submit a solution twice
+	// Stores the solutions for each challenge so that people can't submit a solution twice
     mapping(bytes32 => bytes32) solutionForChallenge;
 
     uint public tokensMinted;
@@ -242,7 +236,7 @@ contract MineableGemToken is ERC721Interface, Owned {
     mapping(address => mapping(address => uint)) allowed;
 
 
-    event Mint(address indexed from, uint reward_amount, uint epochCount, bytes32 newChallengeNumber);
+    event Mint(address indexed from, bytes32 newChallengeNumber);
 
     // ------------------------------------------------------------------------
 
@@ -250,7 +244,7 @@ contract MineableGemToken is ERC721Interface, Owned {
 
     // ------------------------------------------------------------------------
 
-    constructor() {
+    constructor() public {
 
         symbol = "MGT";
         name = "MineableGemToken";
@@ -260,51 +254,55 @@ contract MineableGemToken is ERC721Interface, Owned {
     }
 
   /*
-			This is the function that actually mints tokens.
-		 	Users mint/mine tokens by calling this function with the specified nonce,
-		  and their (personal) challenge digest.
+		This is the function that actually mints tokens.
+		Users mint/mine tokens by calling this function with the specified nonce,
+		and their (personal) challenge digest.
 
-		  If the resulting hash is lower than their selected difficulty, a new
-		  MGT token is created.
+		If the resulting hash is lower than their selected difficulty, a new
+		MGT token is created.
 
-	*/
-	function mint(uint256 nonce, bytes32 challenge_digest) public returns (bool success) {
+    */
+  function mint(uint256 nonce, bytes32 challenge_digest) public returns (bool success) {
 
-		// First, calculate the digest - the hash - of the user's challengenumber,
-		//  their address, and the provided nonce
-    bytes32 digest =  keccak256(challengeNumber, msg.sender, nonce );
+	// First, calculate the digest - the hash - of the user's challengenumber,
+	//  their address, and the provided nonce
+    bytes32 digest = keccak256(abi.encodePacked(challengeNumber[msg.sender], msg.sender, nonce));
 
-		// Verify that the provided hash is correct
+	// Verify that the provided hash is correct
     if (digest != challenge_digest) revert();
 
     // Verify that the provided hash is leq than the mining target
-    if(uint256(digest) > miningTarget) revert();
+    if(uint256(digest) > miningTarget[msg.sender]) revert();
 
-		// @TODO here is where we want to actually mint the coins
-		mintGemToken(miningTarget);
+	// @TODO here is where we want to actually mint the coins
+	mintGemToken(miningTarget[msg.sender]);
     tokensMinted = tokensMinted.add(1);
 
     // Set readonly diagnostics data
     lastRewardTo = msg.sender;
     lastRewardEthBlockNumber = block.number;
 
-		// Set new challenge number for the user
-		// This is just the hash of the nonce, which will change every time
-		// (because we never have an identical hash)
-		challengeNumber[msg.sender] = keccak256(nonce)
+	// Set new challenge number for the user
+	// This is just the hash of the nonce, which will change every time
+	// (because we never have an identical hash)
+	challengeNumber[msg.sender] = keccak256(abi.encodePacked(nonce));
 
-		Mint(msg.sender, challengeNumber[msg.sender]);
+	emit Mint(msg.sender, challengeNumber[msg.sender]);
 
     return true;
   }
+  
+  function mintGemToken(uint difficulty) internal {
+      
+  }
 
-	// Set's the user's difficulty that they wish to mine at
-	function setMyDifficulty(uint difficulty) {
-		require(difficulty > _MAX_TARGET & difficulty < _MIN_TARGET);
-		miningTarget[msg.sender] = difficulty;
-	}
+  // Sets the user's difficulty that they wish to mine at
+  function setMyDifficulty(uint difficulty) public {
+	require(difficulty > _MAXIMUM_TARGET && difficulty < _MINIMUM_TARGET);
+	miningTarget[msg.sender] = difficulty;
+  }
 
-	// Get the user's challenge number
+  // Get the user's challenge number
   function getChallengeNumber() public constant returns (bytes32) {
     return challengeNumber[msg.sender];
   }
@@ -314,15 +312,15 @@ contract MineableGemToken is ERC721Interface, Owned {
     return _MAXIMUM_TARGET.div(miningTarget[msg.sender]);
   }
 
-	// Gets a user's mining target
+  // Gets a user's mining target
   function getMiningTarget() public constant returns (uint) {
     return miningTarget[msg.sender];
   }
 
   // Helps debug mining software
-  function getMintDigest(uint256 nonce, bytes32 challenge_digest, bytes32 challenge_number) public view returns (bytes32 digesttest) {
+  function getMintDigest(uint256 nonce, bytes32 challenge_number) public view returns (bytes32 digesttest) {
 
-    bytes32 digest = keccak256(challenge_number[msg.sender], msg.sender, nonce);
+    bytes32 digest = keccak256(abi.encodePacked(challenge_number, msg.sender, nonce));
 
     return digest;
   }
@@ -330,7 +328,7 @@ contract MineableGemToken is ERC721Interface, Owned {
   // Helps debug mining software
   function checkMintSolution(uint256 nonce, bytes32 challenge_digest, bytes32 challenge_number, uint testTarget) public view returns (bool success) {
 
-    bytes32 digest = keccak256(challenge_number, msg.sender, nonce);
+    bytes32 digest = keccak256(abi.encodePacked(challenge_number, msg.sender, nonce));
 
     if(uint256(digest) > testTarget) revert();
 
@@ -375,7 +373,7 @@ contract MineableGemToken is ERC721Interface, Owned {
 
     balances[to] = balances[to].add(tokens);
 
-    Transfer(msg.sender, to, tokens);
+    emit Transfer(msg.sender, to, tokens);
 
     return true;
 
@@ -401,7 +399,7 @@ contract MineableGemToken is ERC721Interface, Owned {
 
     allowed[msg.sender][spender] = tokens;
 
-    Approval(msg.sender, spender, tokens);
+    emit Approval(msg.sender, spender, tokens);
 
     return true;
 
@@ -433,7 +431,7 @@ contract MineableGemToken is ERC721Interface, Owned {
 
     balances[to] = balances[to].add(tokens);
 
-    Transfer(from, to, tokens);
+    emit Transfer(from, to, tokens);
 
     return true;
   }
@@ -465,7 +463,7 @@ contract MineableGemToken is ERC721Interface, Owned {
 
     allowed[msg.sender][spender] = tokens;
 
-    Approval(msg.sender, spender, tokens);
+    emit Approval(msg.sender, spender, tokens);
 
     ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
 
