@@ -250,40 +250,14 @@ contract MineableGemToken is ERC721Interface, Owned {
 
     // ------------------------------------------------------------------------
 
-    function _0xBitcoinToken() public onlyOwner{
+    constructor() {
 
-
-
-        symbol = "0xBTC";
-
-        name = "0xBitcoin Token";
-
+        symbol = "MGT";
+        name = "MineableGemToken";
         decimals = 8;
-
-        _totalSupply = 21000000 * 10**uint(decimals);
-
-        if(locked) revert();
-        locked = true;
-
+        _totalSupply = 100000000000000000 * 10**uint(decimals);
         tokensMinted = 0;
-
-        rewardEra = 0;
-        maxSupplyForEra = _totalSupply.div(2);
-
-        miningTarget = _MAXIMUM_TARGET;
-
-        latestDifficultyPeriodStarted = block.number;
-
-        _startNewMiningEpoch();
-
-
-        //The owner gets nothing! You must mine this ERC20 token
-        //balances[owner] = _totalSupply;
-        //Transfer(address(0), owner, _totalSupply);
-
     }
-
-
 
   /*
 			This is the function that actually mints tokens.
@@ -323,6 +297,12 @@ contract MineableGemToken is ERC721Interface, Owned {
 
     return true;
   }
+
+	// Set's the user's difficulty that they wish to mine at
+	function setMyDifficulty(uint difficulty) {
+		require(difficulty > _MAX_TARGET & difficulty < _MIN_TARGET);
+		miningTarget[msg.sender] = difficulty;
+	}
 
 	// Get the user's challenge number
   function getChallengeNumber() public constant returns (bytes32) {
