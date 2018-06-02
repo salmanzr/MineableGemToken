@@ -40,7 +40,7 @@ function setup() {
 				// Then, if we have any, display them
 				var i;
 				for (i=0; i < myNumGems; i++){
-					contract.getMyGemByIndex(i, {from: web3.eth.accounts[0]}, function(error, result) {
+					contract.getGem(i, {from: web3.eth.accounts[0]}, function(error, result) {
 						if (!error) {
 						  $("#gem-display").append("<div class='col-sm'>Gem"+i+"</div>")
 						} else {

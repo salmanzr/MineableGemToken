@@ -32,6 +32,9 @@ contract GemBase {
 		// The rarity of the gem. Determined by the difficulty when mined
     uint256 rarity;
 
+    // The price of the gem.
+    uint256 price;
+
     // The timestamp from the block when this cat came into existence.
     uint64 morphTime;
   }
@@ -79,10 +82,11 @@ contract GemBase {
     // Initialize the gem in memory
     Gem memory _gem = Gem({
       rarity: _rarity,
+      price: uint256(0),
       morphTime: uint64(now)
     });
 
-		// Initalize the gem ID & push it to the list of gems
+    // Initalize the gem ID & push it to the list of gems
     uint256 newGemId = gems.push(_gem) - 1;
 
     require(newGemId == uint256(uint32(newGemId)));
@@ -106,6 +110,26 @@ contract GemOwnership is GemBase, ERC721 {
     /// @notice Name and symbol of the non fungible token, as defined in ERC721.
     string public constant name = "MineableGemTokens";
     string public constant symbol = "MGT";
+
+  // Put a gem for sale only if the caller is the owner
+  function putGemForSale (uint256 _gemId, uint256 _price) external {
+      require(_price != 0);
+      if (_owns(msg.sender, _gemId)) {
+          gems[_gemId].price = _price;
+        }
+    }
+
+  // Buy a gem that is for sale (i.e. the price is not 0)
+  function buyGem (uint256 _gemId) external payable {
+      require(gems[_gemId].price != 0);
+      require(msg.value == gems[_gemId].price);
+
+      // Transfer gem to the buyer
+      _transfer(gemIndexToOwner[_gemId], msg.sender, _gemId);
+
+      // Transfer ether to the previous owner
+      gemIndexToOwner[_gemId].transfer(msg.value);
+    } 
 
     // Internal utility functions: These functions all assume that their input arguments
     // are valid. We leave it to public methods to sanitize their inputs and follow
@@ -221,7 +245,7 @@ contract GemOwnership is GemBase, ERC721 {
     /// @dev Required for ERC-721 compliance.
     function totalSupply() public view returns (uint) {
         return gems.length - 1;
-    }
+    } 
 
     /// @notice Returns the address currently assigned ownership of a given Gem.
     /// @dev Required for ERC-721 compliance.
@@ -368,11 +392,13 @@ contract GemCore is GemMining {
         view
         returns (
         uint256 morphTime,
+        uint256 price,
         uint256 rarity
     ) {
         Gem storage myGem = gems[_id];
         morphTime = uint256(myGem.morphTime);
         rarity = myGem.rarity;
+        price = myGem.price;
     }
 }
 
