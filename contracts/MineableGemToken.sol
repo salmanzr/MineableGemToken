@@ -3,19 +3,19 @@ pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
 
-// '0xBitcoin Token' contract
+// 'MineableGemToken' contract
 
-// Mineable ERC20 Token using Proof Of Work
+// Mineable ERC721 Token using Proof Of Work
 
 //
 
-// Symbol      : 0xBTC
+// Symbol      : MGT
 
-// Name        : 0xBitcoin Token
+// Name        : MineableGemToken
 
-// Total supply: 21,000,000.00
+// Total supply: 1,000,000,000,000,000,000,000,000,000,000.00
 
-// Decimals    : 8
+// Decimals    : 1
 
 //
 
@@ -186,61 +186,62 @@ contract Owned {
 
 // ----------------------------------------------------------------------------
 
-// ERC20 Token, with the addition of symbol, name and decimals and an
+// ERC721 Token, with the addition of symbol, name and decimals and an
 
 // initial fixed supply
 
 // ----------------------------------------------------------------------------
 
-contract _0xBitcoinToken is ERC20Interface, Owned {
+contract MineableGemToken is ERC721Interface, Owned {
 
     using SafeMath for uint;
     using ExtendedMath for uint;
 
 
     string public symbol;
-
-    string public  name;
-
+    string public name;
     uint8 public decimals;
-
     uint public _totalSupply;
 
+    uint public latestDifficultyPeriodStarted;
 
+		// Number of "blocks" (gems) mined
+    uint public epochCount;
 
-     uint public latestDifficultyPeriodStarted;
-
-
-
-    uint public epochCount;//number of 'blocks' mined
-
-
+		// @TODO remove this
     uint public _BLOCKS_PER_READJUSTMENT = 1024;
 
-
-    //a little number
+    // Minimum difficulty that you can mine at.
     uint public  _MINIMUM_TARGET = 2**16;
 
-
-      //a big number is easier ; just find a solution that is smaller
-    //uint public  _MAXIMUM_TARGET = 2**224;  bitcoin uses 224
+		// Maximum diffuculty that you can mine at.
     uint public  _MAXIMUM_TARGET = 2**234;
 
-
+		// The actual difficulty to mine at
+		// @TODO port this over to a per-user mapping
     uint public miningTarget;
 
-    bytes32 public challengeNumber;   //generate a new one when a new reward is minted
+		// Challenge number - means that no one can submit the same hash twice
+		// @TODO port this over to a per-user mapping
+		// A new one is generated whenever tokens are minted
+    bytes32 public challengeNumber;
 
-
-
+		// @TODO for now, remove these - they aren't useful for ERC-721
+		// (especially with variable difficulty)
     uint public rewardEra;
     uint public maxSupplyForEra;
 
-
+		// Just stores the last person that created a MGT
     address public lastRewardTo;
+
+		// @TODO remove this, because we're only minting 1 token each time
     uint public lastRewardAmount;
+
+		// Just stores the last block number a token was created
     uint public lastRewardEthBlockNumber;
 
+	  // Prevents someone from calling the constructor twice
+		// @TODO remove this
     bool locked = false;
 
     mapping(bytes32 => bytes32) solutionForChallenge;
@@ -296,52 +297,49 @@ contract _0xBitcoinToken is ERC20Interface, Owned {
 
 
 
+  /*
+			This is the function that actually mints tokens.
+		 	Users mint/mine tokens by calling this function with the specified nonce,
+		  and their (personal) challenge digest.
 
-        function mint(uint256 nonce, bytes32 challenge_digest) public returns (bool success) {
+		  If the resulting hash is lower than their selected difficulty, a new
+		  MGT token is created.
 
+	*/
+	function mint(uint256 nonce, bytes32 challenge_digest) public returns (bool success) {
 
-            //the PoW must contain work that includes a recent ethereum block hash (challenge number) and the msg.sender's address to prevent MITM attacks
-            bytes32 digest =  keccak256(challengeNumber, msg.sender, nonce );
+		// First, calculate the digest - the hash - of the user's challengenumber,
+		//  their address, and the provided nonce
+    bytes32 digest =  keccak256(challengeNumber, msg.sender, nonce );
 
-            //the challenge digest must match the expected
-            if (digest != challenge_digest) revert();
+		// Verify that the provided hash is correct
+    if (digest != challenge_digest) revert();
 
-            //the digest must be smaller than the target
-            if(uint256(digest) > miningTarget) revert();
+    // Verify that the provided hash is leq than the mining target
+    if(uint256(digest) > miningTarget) revert();
 
+    // Only allow one reward for each challenge
+    bytes32 solution = solutionForChallenge[challengeNumber];
+    solutionForChallenge[challengeNumber] = digest;
+    if(solution != 0x0) revert();  //prevent the same answer from awarding twice
 
-            //only allow one reward for each challenge
-             bytes32 solution = solutionForChallenge[challengeNumber];
-             solutionForChallenge[challengeNumber] = digest;
-             if(solution != 0x0) revert();  //prevent the same answer from awarding twice
+		// @TODO here is where we want to actually mint the coins
+		mintGemToken(miningTarget);
+    tokensMinted = tokensMinted.add(1);
 
+    // Set readonly diagnostics data
+    lastRewardTo = msg.sender;
+    lastRewardEthBlockNumber = block.number;
 
-            uint reward_amount = getMiningReward();
+		// TODO set new challenge number
 
-            balances[msg.sender] = balances[msg.sender].add(reward_amount);
+		Mint(msg.sender, challengeNumber );
 
-            tokensMinted = tokensMinted.add(reward_amount);
+    return true;
 
-
-            //Cannot mint more tokens than there are
-            assert(tokensMinted <= maxSupplyForEra);
-
-            //set readonly diagnostics data
-            lastRewardTo = msg.sender;
-            lastRewardAmount = reward_amount;
-            lastRewardEthBlockNumber = block.number;
-
-
-             _startNewMiningEpoch();
-
-              Mint(msg.sender, reward_amount, epochCount, challengeNumber );
-
-           return true;
-
-        }
+  }
 
 
-    //a new 'block' to be mined
     function _startNewMiningEpoch() internal {
 
       //if max supply for the era will be exceeded next reward round then enter the new era before that happens
