@@ -340,7 +340,7 @@ contract GemMining is GemOwnership {
 
   // Sets the user's difficulty that they wish to mine at
   function setMyDifficulty(uint difficulty) public {
-    require(difficulty > _MAXIMUM_TARGET && difficulty < _MINIMUM_TARGET);
+    require(difficulty < _MAXIMUM_TARGET && difficulty > _MINIMUM_TARGET);
     miningTarget[msg.sender] = difficulty;
   }
 
