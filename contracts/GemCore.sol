@@ -131,6 +131,9 @@ contract GemOwnership is GemBase, ERC721 {
 
       // Transfer ether to the previous owner
       gemIndexToOwner[_gemId].transfer(msg.value);
+      
+      // Set price to zero
+      gems[_gemId].price = 0;
     } 
 
     // Internal utility functions: These functions all assume that their input arguments
@@ -337,7 +340,7 @@ contract GemMining is GemOwnership {
     // Set new challenge number for the user
     challengeNumber[msg.sender] = keccak256(abi.encodePacked(nonce));
 
-		return true;
+	return true;
   }
 
   // Sets the user's difficulty that they wish to mine at
@@ -351,7 +354,7 @@ contract GemMining is GemOwnership {
     return challengeNumber[msg.sender];
   }
 
-  // Gets the number of zeroers the digest of the PoW solution requires for the user
+  // Gets the number of zeroes the digest of the PoW solution requires for the user
   function getMiningDifficulty() public constant returns (uint) {
     return _MAXIMUM_TARGET.div(miningTarget[msg.sender]);
   }
